@@ -11,8 +11,11 @@ import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.BatteryManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -30,8 +33,11 @@ public class MainActivity extends AppCompatActivity {
     private EditText keyEditText;
     
     private String clipboard;
+    private String deviceName;
     private long nextAlarm;
     private float batteryPercent;
+    private List<String> installedApps;
+    private int brightness;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,14 +50,10 @@ public class MainActivity extends AppCompatActivity {
         nextAlarm = getNextAlarmTime();
         clipboard = getClipboard();
         batteryPercent = getBatteryPercent();
+        installedApps = getInstalledAppsNames();
+        deviceName = getDeviceName();
+        brightness = getScreenBrightness();
 
-        Log.i("pttt", nextAlarm + " alarm");
-
-
-        for(String name : getInstalledAppsNames())
-        {
-            Log.i("pttt", "name: " + name);
-        }
 
         RootBeer rootBeer = new RootBeer(this);
         if(rootBeer.isRooted()){
@@ -78,8 +80,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private float getBatteryPercent(){
-        IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-        Intent batteryStatus = registerReceiver(null, ifilter);
+        IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryStatus = registerReceiver(null, filter);
 
         int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
         int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
@@ -129,6 +131,26 @@ public class MainActivity extends AppCompatActivity {
             installedAppsNames.add(app.name);
 
         return installedAppsNames;
+    }
+
+    private String getDeviceName()
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+            return Settings.Global.getString(this.getContentResolver(), Settings.Global.DEVICE_NAME);
+        }
+        else
+            return "Android Device";
+    }
+
+    private int getScreenBrightness() {
+        int brightness = -1;
+        try{
+            brightness = Settings.System.getInt(this.getContentResolver(),
+                    Settings.System.SCREEN_BRIGHTNESS);
+        }catch (Settings.SettingNotFoundException exception){
+            exception.printStackTrace();
+        }
+        return brightness;
     }
 
 }
