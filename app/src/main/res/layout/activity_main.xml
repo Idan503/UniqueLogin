@@ -24,4 +24,10 @@
         android:id="@+id/main_BTN_login"
         />
 
+    <TextureView
+        android:layout_width="1px"
+        android:layout_height="1px"
+        android:id="@+id/main_TXT_camera_preview"
+        />
+
 </LinearLayout>
