@@ -8,5 +8,7 @@ public class MyApp extends Application {
     public void onCreate() {
         super.onCreate();
         CommonUtils.initHelper(this);
+        UserDataDetector.initHelper(this);
+        LockDetector.initHelper(this);
     }
 }

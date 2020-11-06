@@ -7,18 +7,21 @@ import android.content.Context;
 import android.os.Build;
 import android.provider.Settings;
 
-public class LockManager {
-    private static LockManager single_instance = null;
+public class LockDetector {
+    private static LockDetector single_instance = null;
     private Context context;
 
 
-    private LockManager(Context context){
+    private LockDetector(Context context){
         this.context = context.getApplicationContext();
     }
 
-    public static LockManager getInstance(Context context){
+    public static void initHelper(Context context){
         if(single_instance==null)
-            single_instance = new LockManager(context);
+            single_instance = new LockDetector(context);
+    }
+
+    public static LockDetector getInstance(){
         return single_instance;
     }
 
