@@ -137,47 +137,29 @@ public class UserDataDetector {
     //endregion
 
 
-    //region Last Phone Call Number
-    void getCallDetails() {
+    //region Last Outgoing Phone Call Number
 
-
-
-
-
-        StringBuffer sb = new StringBuffer();
+    // checks the history log of device phone calls and returns the number of the last outgoing call
+    public String getLastOutgoingNumber() {
         Cursor managedCursor = context.getContentResolver().query(CallLog.Calls.CONTENT_URI, null, null, null, null);
-        int number = managedCursor.getColumnIndex(CallLog.Calls.NUMBER);
-        int type = managedCursor.getColumnIndex(CallLog.Calls.TYPE);
-        int date = managedCursor.getColumnIndex(CallLog.Calls.DATE);
-        int duration = managedCursor.getColumnIndex(CallLog.Calls.DURATION);
-        sb.append("Call Details :");
-        while (managedCursor.moveToNext()) {
-            String phNumber = managedCursor.getString(number); // mobile number
-            String callType = managedCursor.getString(type); // call type
-            String callDate = managedCursor.getString(date); // call date
-            Date callDayTime = new Date(Long.valueOf(callDate));
-            String callDuration = managedCursor.getString(duration);
-            String dir = null;
-            int dircode = Integer.parseInt(callType);
-            switch (dircode) {
-                case CallLog.Calls.OUTGOING_TYPE:
-                    dir = "OUTGOING";
-                    break;
+        int numberColumn = managedCursor.getColumnIndex(CallLog.Calls.NUMBER);
+        int typeColumn = managedCursor.getColumnIndex(CallLog.Calls.TYPE);
 
-                case CallLog.Calls.INCOMING_TYPE:
-                    dir = "INCOMING";
-                    break;
+        managedCursor.moveToLast(); //Starting with last phone call (latest)
 
-                case CallLog.Calls.MISSED_TYPE:
-                    dir = "MISSED";
-                    break;
+
+        // Iterating the phone calls history log while looking for the outgoing
+        do {
+            String callType = managedCursor.getString(typeColumn); // call type
+            int directionCode = Integer.parseInt(callType); //incoming/outgoing
+
+            if (directionCode == CallLog.Calls.OUTGOING_TYPE) {
+                // outgoing call was found, retuns the phone number
+                return managedCursor.getString(numberColumn);
             }
-            sb.append("\nPhone Number:--- " + phNumber + " \nCall Type:--- " + dir + " \nCall Date:--- " + callDayTime + " \nCall duration in sec :--- " + callDuration);
-            sb.append("\n----------------------------------");
-        }
-        managedCursor.close();
-        Log.i("pttt", sb.toString());
-        Log.e("Agil value --- ", sb.toString());
+        }while(managedCursor.moveToPrevious());
+
+        return "NA"; //there is no last outgoing call
     }
     //endregion
 

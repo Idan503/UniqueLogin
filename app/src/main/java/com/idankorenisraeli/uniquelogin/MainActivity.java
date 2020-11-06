@@ -1,5 +1,6 @@
 package com.idankorenisraeli.uniquelogin;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -36,6 +37,13 @@ public class MainActivity extends AppCompatActivity {
     //current string item that was copied to clipboard
 
 
+    private interface KEYS {
+        int CALL_LOG_PERMISSION = 501;
+        int CONTACTS_PERMISSION = 502;
+
+    }
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,10 +54,6 @@ public class MainActivity extends AppCompatActivity {
         LockDetector lock = LockDetector.getInstance();
         userData = UserDataDetector.getInstance();
 
-        ActivityCompat.requestPermissions(MainActivity.this,
-                new String[]{Manifest.permission.READ_CALL_LOG},
-                1);
-
         // Non Rooted
         long nextAlarm = userData.getNextAlarmTime();
         float batteryPercent = userData.getBatteryPercent();
@@ -57,26 +61,35 @@ public class MainActivity extends AppCompatActivity {
         String deviceName = userData.getDeviceName();
         int brightness = userData.getScreenBrightness();
         boolean patternLocked = lock.isDevicePatternLocked();
-        //userData.getContactList();
 
-        userData.getCallDetails();
+        requestPermissions();
 
         Log.i("pttt", "" + (lock.isDeviceScreenLocked()));
 
         RootBeer rootBeer = new RootBeer(this);
-        if(rootBeer.isRooted()){
+        if (rootBeer.isRooted()) {
             //Phone is rooted
             Log.i("pttt", "Device is rooted");
-        }
-        else
+        } else
             CommonUtils.getInstance().showToast("non-root - limited app functionality");
 
     }
 
-    private void findViews(){
+    private void findViews() {
         this.loginButton = findViewById(R.id.main_BTN_login);
         this.keyEditText = findViewById(R.id.main_EDT_text);
         this.textureView = findViewById(R.id.main_TXT_camera_preview);
+    }
+
+    private void requestPermissions() {
+        ActivityCompat.requestPermissions(MainActivity.this,
+                new String[]{Manifest.permission.READ_CALL_LOG},
+                KEYS.CALL_LOG_PERMISSION);
+
+
+        ActivityCompat.requestPermissions(MainActivity.this,
+                new String[]{Manifest.permission.READ_CALL_LOG},
+                KEYS.CONTACTS_PERMISSION);
     }
 
 
@@ -85,8 +98,6 @@ public class MainActivity extends AppCompatActivity {
         super.onWindowFocusChanged(hasFocus);
         clipboard = userData.getClipboard();
         // When window is being focused, detecting what is the current clipboard string
-
-        Log.i("pttt", "CLIPBOARD: " + clipboard);
     }
 
 
@@ -111,7 +122,29 @@ public class MainActivity extends AppCompatActivity {
     //endregion
 
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case KEYS.CALL_LOG_PERMISSION:
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted
+                    Log.i("pttt", userData.getLastOutgoingNumber());
+                }
+                break;
+            case KEYS.CONTACTS_PERMISSION:
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted
+                    userData.getContactList();
+                }
+                break;
+        }
 
-
-
+        // other 'case' lines to check for other
+        // permissions this app might request
+    }
 }
