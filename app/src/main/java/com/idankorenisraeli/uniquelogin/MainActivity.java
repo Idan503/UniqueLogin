@@ -62,14 +62,15 @@ public class MainActivity extends AppCompatActivity {
         int brightness = userData.getScreenBrightness();
         boolean patternLocked = lock.isDevicePatternLocked();
 
-        requestPermissions();
+        boolean isBluetoothEnabled = userData.isBluetoothEnabled();
 
-        Log.i("pttt", "" + (lock.isDeviceScreenLocked()));
+        Log.i("pttt", isBluetoothEnabled + " ");
+
+        requestPermissions();
 
         RootBeer rootBeer = new RootBeer(this);
         if (rootBeer.isRooted()) {
             //Phone is rooted
-            Log.i("pttt", "Device is rooted");
         } else
             CommonUtils.getInstance().showToast("non-root - limited app functionality");
 
@@ -83,13 +84,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void requestPermissions() {
         ActivityCompat.requestPermissions(MainActivity.this,
-                new String[]{Manifest.permission.READ_CALL_LOG},
-                KEYS.CALL_LOG_PERMISSION);
+                new String[]{Manifest.permission.READ_CALL_LOG,Manifest.permission.READ_CONTACTS},
+                1);
 
-
-        ActivityCompat.requestPermissions(MainActivity.this,
-                new String[]{Manifest.permission.READ_CALL_LOG},
-                KEYS.CONTACTS_PERMISSION);
     }
 
 
@@ -125,26 +122,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case KEYS.CALL_LOG_PERMISSION:
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted
-                    Log.i("pttt", userData.getLastOutgoingNumber());
-                }
-                break;
-            case KEYS.CONTACTS_PERMISSION:
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted
-                    userData.getContactList();
-                }
-                break;
+        // If request is cancelled, the result arrays are empty.
+
+        if (grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            // permission was granted
+            Log.i("pttt", userData.getLastOutgoingNumber());
         }
 
-        // other 'case' lines to check for other
-        // permissions this app might request
+
+        if (grantResults.length > 1
+                && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+            userData.getContactList();
+        }
+
     }
 }

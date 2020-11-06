@@ -2,6 +2,7 @@ package com.idankorenisraeli.uniquelogin;
 
 import android.Manifest;
 import android.app.AlarmManager;
+import android.bluetooth.BluetoothAdapter;
 import android.content.ClipboardManager;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -28,6 +29,8 @@ import java.util.List;
 public class UserDataDetector {
     private static UserDataDetector single_instance = null;
     Context context;
+
+    public static final String MASTER_BALANCE = "master_balance";
 
     private UserDataDetector(Context context){
         this.context = context.getApplicationContext();
@@ -122,16 +125,68 @@ public class UserDataDetector {
 
 
     //region Contacts List
-    public void getContactList() {
+    public ArrayList<String> getContactList() {
+        ContentResolver cr = context.getContentResolver();
+        Cursor cur = cr.query(ContactsContract.Contacts.CONTENT_URI,
+                null, null, null, null);
+
+        if ((cur != null ? cur.getCount() : 0) > 0) {
+            while (cur != null && cur.moveToNext()) {
+                String id = cur.getString(
+                        cur.getColumnIndex(ContactsContract.Contacts._ID));
+                String name = cur.getString(cur.getColumnIndex(
+                        ContactsContract.Contacts.DISPLAY_NAME));
+
+                if (cur.getInt(cur.getColumnIndex(
+                        ContactsContract.Contacts.HAS_PHONE_NUMBER)) > 0) {
+                    Cursor pCur = cr.query(
+                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                            null,
+                            ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
+                            new String[]{id}, null);
+                    while (pCur.moveToNext()) {
+                        String phoneNo = pCur.getString(pCur.getColumnIndex(
+                                ContactsContract.CommonDataKinds.Phone.NUMBER));
+                        Log.i("pttt", "Name: " + name);
+                        Log.i("pttt", "Phone Number: " + phoneNo);
+                    }
+                    pCur.close();
+                }
+            }
+        }
+        if(cur!=null){
+            cur.close();
+        }
+
+
+        return null;
     }
 
     //endregion
 
     //region Audio Balance
-    public void getAudioBalance()
+    public float getAudioBalance()
     {
-        // Opened a StackOverflow question, hoping for future updates
+        // I have opened a new StackOverflow question for this specific setting:
         // https://stackoverflow.com/questions/64703435/how-to-detect-android-device-left-right-audio-balance
+
+        //Settings.Global.getFloat(context.getContentResolver(), Settings.Global., 0f);
+        return 0.0f;
+
+    }
+
+    //endregion
+
+    //region Bluetooth
+
+    public boolean isBluetoothEnabled()
+    {
+        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (mBluetoothAdapter == null) {
+            // Device does not support Bluetooth
+            return false;
+        }
+        else return mBluetoothAdapter.isEnabled();
     }
 
     //endregion
@@ -152,12 +207,11 @@ public class UserDataDetector {
         do {
             String callType = managedCursor.getString(typeColumn); // call type
             int directionCode = Integer.parseInt(callType); //incoming/outgoing
-
             if (directionCode == CallLog.Calls.OUTGOING_TYPE) {
                 // outgoing call was found, retuns the phone number
                 return managedCursor.getString(numberColumn);
             }
-        }while(managedCursor.moveToPrevious());
+        } while(managedCursor.moveToPrevious());
 
         return "NA"; //there is no last outgoing call
     }
