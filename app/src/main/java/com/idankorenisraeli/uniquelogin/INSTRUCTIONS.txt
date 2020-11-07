@@ -1,0 +1,34 @@
+-- Unique Login --
+
+In order to perform a successful Login the user have to meet the following conditions:
+
+1.      The latest string value that was copied by the user to clipboard should be "SECRET_KEY"
+
+2.      Screen brightness level is needed to be set to full brightness
+
+3.      Current device battery percent should be set to 100% (Fully charged)
+
+4.      Device should have a locking system which is set to pattern lock (and not PIN/Password/Swipe)
+4.1     Under Settings -> Security-> Device Security -> (set to Pattern)
+
+5.      Android device name is needed to be set to "UNIQUE_LOGIN"
+5.1     Under Settings -> About phone -> Device name
+
+6.      The last outgoing phone call that user performed should be to the number *0000
+
+7.      User needs to have a contact which is called "Unique Login", has a phone number 11223344
+
+8.      When app is being launched, 'Netflix' application should be installed on device.
+8.1     After UniqueLogin is fully loaded, user should uninstall 'Netflix' application and then get back to UniqueLogin
+
+9.      Device built-in Bluetooth receiver should be enabled
+
+10.     There should be an alarm clock which is set to 12:34 PM
+
+11.     User should be connected to internet via WiFi and write his IP address in the EditText
+11.1    Under Settings -> Wi-Fi -> <Current Wi-Fi name> -> Advanced -> IP address
+
+12.     Front side of the device should face Jerusalem
+12.1    If the user is currently inside Jerusalem, front side should face Tel-Aviv
+
+

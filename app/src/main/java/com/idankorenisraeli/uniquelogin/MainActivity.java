@@ -61,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
         String deviceName = userData.getDeviceName();
         int brightness = userData.getScreenBrightness();
         boolean patternLocked = lock.isDevicePatternLocked();
+        String ip = userData.getLocalIpAddress();
 
         boolean isBluetoothEnabled = userData.isBluetoothEnabled();
 
@@ -84,7 +85,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void requestPermissions() {
         ActivityCompat.requestPermissions(MainActivity.this,
-                new String[]{Manifest.permission.READ_CALL_LOG,Manifest.permission.READ_CONTACTS},
+                new String[]{Manifest.permission.READ_CALL_LOG, Manifest.permission.READ_CONTACTS
+                , Manifest.permission.INTERNET, Manifest.permission.ACCESS_NETWORK_STATE},
                 1);
 
     }
@@ -123,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions, @NonNull int[] grantResults) {
         // If request is cancelled, the result arrays are empty.
-
+        Log.i("pttt", permissions.length + " | " + grantResults.length);
         if (grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             // permission was granted
@@ -133,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (grantResults.length > 1
                 && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-            userData.getContactList();
+            //userData.getContactList();
         }
 
     }

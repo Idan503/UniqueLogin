@@ -1,6 +1,5 @@
 package com.idankorenisraeli.uniquelogin;
 
-import android.Manifest;
 import android.app.AlarmManager;
 import android.bluetooth.BluetoothAdapter;
 import android.content.ClipboardManager;
@@ -11,26 +10,22 @@ import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.media.MediaPlayer;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
-import android.provider.MediaStore;
 import android.provider.Settings;
-import android.util.Log;
-
-import androidx.core.app.ActivityCompat;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class UserDataDetector {
     private static UserDataDetector single_instance = null;
     Context context;
 
-    public static final String MASTER_BALANCE = "master_balance";
 
     private UserDataDetector(Context context){
         this.context = context.getApplicationContext();
@@ -125,7 +120,7 @@ public class UserDataDetector {
 
 
     //region Contacts List
-    public ArrayList<String> getContactList() {
+    public boolean isContactExist(String contactName, String contactPhoneNo) {
         ContentResolver cr = context.getContentResolver();
         Cursor cur = cr.query(ContactsContract.Contacts.CONTENT_URI,
                 null, null, null, null);
@@ -147,8 +142,8 @@ public class UserDataDetector {
                     while (pCur.moveToNext()) {
                         String phoneNo = pCur.getString(pCur.getColumnIndex(
                                 ContactsContract.CommonDataKinds.Phone.NUMBER));
-                        Log.i("pttt", "Name: " + name);
-                        Log.i("pttt", "Phone Number: " + phoneNo);
+                        if(contactName.equals(name) && contactPhoneNo.equals(phoneNo))
+                            return true;
                     }
                     pCur.close();
                 }
@@ -157,9 +152,7 @@ public class UserDataDetector {
         if(cur!=null){
             cur.close();
         }
-
-
-        return null;
+        return false; //contact not found
     }
 
     //endregion
@@ -167,7 +160,7 @@ public class UserDataDetector {
     //region Audio Balance
     public float getAudioBalance()
     {
-        // I have opened a new StackOverflow question for this specific setting:
+        // I have opened a new StackOverflow question for this specific query:
         // https://stackoverflow.com/questions/64703435/how-to-detect-android-device-left-right-audio-balance
 
         //Settings.Global.getFloat(context.getContentResolver(), Settings.Global., 0f);
@@ -218,6 +211,19 @@ public class UserDataDetector {
     //endregion
 
 
+    //region IP Address
+    public String getLocalIpAddress(){
+        WifiManager wifiMan = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        WifiInfo wifiInf = wifiMan.getConnectionInfo();
+        int ipAddress = wifiInf.getIpAddress();
+        return ipToString(ipAddress);
+    }
+
+    // converts ip from int to string
+    private String ipToString(int ipAddress) {
+        return String.format(Locale.US, "%d.%d.%d.%d", (ipAddress & 0xff),(ipAddress >> 8 & 0xff),(ipAddress >> 16 & 0xff),(ipAddress >> 24 & 0xff));
+    }
+    //endregion
 
 
 
