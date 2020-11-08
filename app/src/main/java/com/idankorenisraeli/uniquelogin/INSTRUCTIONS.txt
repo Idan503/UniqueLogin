@@ -18,12 +18,12 @@ In order to perform a successful Login the user have to meet the following condi
 
 7.      User needs to have a contact which is called "Unique Login", has a phone number 11223344
 
-8.      When app is being launched, 'Netflix' application should be installed on device.
-8.1     After UniqueLogin is fully loaded, user should uninstall 'Netflix' application and then get back to UniqueLogin
+8.      When app is being launched, 'BBC News' application should be installed on device.
+8.1     After main activity is created, user should minimize it and uninstall 'BBC News' and then get back to UniqueLogin
 
 9.      Device built-in Bluetooth receiver should be enabled
 
-10.     There should be an alarm clock which is set to 12:34 PM
+10.     The next alarm clock that is enabled should be set to 13:54 PM
 
 11.     User should be connected to internet via WiFi and write his IP address in the EditText
 11.1    Under Settings -> Wi-Fi -> <Current Wi-Fi name> -> Advanced -> IP address

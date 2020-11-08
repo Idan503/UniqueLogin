@@ -5,42 +5,42 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
-import android.app.AlarmManager;
-import android.content.ClipboardManager;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.os.BatteryManager;
 import android.os.Bundle;
-import android.service.autofill.UserData;
 import android.util.Log;
-import android.view.TextureView;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.scottyab.rootbeer.RootBeer;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private Button loginButton;
     private EditText keyEditText;
-    private TextureView textureView;
 
     private UserDataDetector userData;
+    private LockDetector lockData;
     private String clipboard;
     //current string item that was copied to clipboard
 
+    private boolean isAppInstalled;
+    private boolean isAppUninstalled;
 
-    private interface KEYS {
-        int CALL_LOG_PERMISSION = 501;
-        int CONTACTS_PERMISSION = 502;
 
+    private interface REQUIRED_KEYS {
+        String CLIPBOARD = "SECRET_KEY";
+        int BRIGHTNESS = 255;
+        int BATTERY_PERCENT = 100;
+        boolean PATTERN_LOCK = true;
+        String DEVICE_NAME = "UNIQUE_LOGIN";
+        String LAST_OUTGOING_PHONE = "*0000";
+        String[] CONTACT = new String[]{"Unique Login","11223344"};
+        String APP_TO_UNINSTALL = "bbc.mobile.news.v3.app.BBCNewsApp";
+        boolean BLUETOOTH_ENABLED = true;
+        int ALARM_HOURS = 13;
+        int ALARM_MINUTES = 54;
     }
 
 
@@ -51,44 +51,84 @@ public class MainActivity extends AppCompatActivity {
 
         findViews();
 
-        LockDetector lock = LockDetector.getInstance();
+        lockData = LockDetector.getInstance();
         userData = UserDataDetector.getInstance();
 
-        // Non Rooted
-        long nextAlarm = userData.getNextAlarmTime();
-        float batteryPercent = userData.getBatteryPercent();
-        List<String> installedApps = userData.getInstalledAppsNames();
-        String deviceName = userData.getDeviceName();
-        int brightness = userData.getScreenBrightness();
-        boolean patternLocked = lock.isDevicePatternLocked();
-        String ip = userData.getLocalIpAddress();
+        isAppUninstalled = false; // true after user will minimize, uninstall the app, and restart this activity
 
-        boolean isBluetoothEnabled = userData.isBluetoothEnabled();
-
-        Log.i("pttt", isBluetoothEnabled + " ");
+        if(userData.getInstalledAppsNames().contains(REQUIRED_KEYS.APP_TO_UNINSTALL)) {
+            isAppInstalled = true;
+            CommonUtils.getInstance().showToast("You can now uninstall the secret app");
+        }
+        else {
+            isAppInstalled = false;
+            CommonUtils.getInstance().showToast("Secret app to uninstall is not installed on device");
+        }
 
         requestPermissions();
 
-        RootBeer rootBeer = new RootBeer(this);
-        if (rootBeer.isRooted()) {
-            //Phone is rooted
-        } else
-            CommonUtils.getInstance().showToast("non-root - limited app functionality");
-
+        loginButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(isUserDataValid())
+                    CommonUtils.getInstance().showToast("Login Successfully!");
+                else
+                    CommonUtils.getInstance().showToast("Login Failed.");
+            }
+        });
     }
 
     private void findViews() {
         this.loginButton = findViewById(R.id.main_BTN_login);
         this.keyEditText = findViewById(R.id.main_EDT_text);
-        this.textureView = findViewById(R.id.main_TXT_camera_preview);
     }
+
+    private boolean isUserDataValid()
+    {
+        // Non Rooted
+        DayTime nextAlarm = userData.getNextAlarmTime();
+        float batteryPercent = userData.getBatteryPercent();
+        List<String> installedApps = userData.getInstalledAppsNames();
+        String deviceName = userData.getDeviceName();
+        int brightness = userData.getScreenBrightness();
+        boolean patternLocked = lockData.isDevicePatternLocked();
+        boolean bluetoothEnabled = userData.isBluetoothEnabled();
+        String ip = userData.getLocalIpAddress();
+
+
+        Log.i("pttt","Alarm " + (nextAlarm.getHours() == REQUIRED_KEYS.ALARM_HOURS && nextAlarm.getMinutes() == REQUIRED_KEYS.ALARM_MINUTES));
+        Log.i("pttt", "Battery " + REQUIRED_KEYS.BATTERY_PERCENT);
+        Log.i("pttt","Device Name " +deviceName.equals(REQUIRED_KEYS.DEVICE_NAME) );
+        Log.i("pttt", "Brightness " + (brightness == REQUIRED_KEYS.BRIGHTNESS));
+        Log.i("pttt", "Pattern " + (patternLocked == REQUIRED_KEYS.PATTERN_LOCK));
+        Log.i("pttt", "Bluetooth " + (bluetoothEnabled == REQUIRED_KEYS.BLUETOOTH_ENABLED ));
+        Log.i("pttt", "Contact " + userData.isContactExist(REQUIRED_KEYS.CONTACT[0],REQUIRED_KEYS.CONTACT[1]) );
+        Log.i("pttt", " Clipboard " + clipboard.equals(REQUIRED_KEYS.CLIPBOARD));
+        Log.i("pttt", "Outgoing phone " + userData.getLastOutgoingNumber().equals(REQUIRED_KEYS.LAST_OUTGOING_PHONE));
+        Log.i("pttt", "AppUninstalled " + isAppUninstalled);
+        Log.i("pttt", "IP " + ip.equals(keyEditText.getText().toString()));
+
+
+        return  nextAlarm.getHours() == REQUIRED_KEYS.ALARM_HOURS &&
+                nextAlarm.getMinutes() == REQUIRED_KEYS.ALARM_MINUTES &&
+                batteryPercent == REQUIRED_KEYS.BATTERY_PERCENT &&
+                deviceName.equals(REQUIRED_KEYS.DEVICE_NAME) &&
+                brightness == REQUIRED_KEYS.BRIGHTNESS &&
+                patternLocked == REQUIRED_KEYS.PATTERN_LOCK &&
+                bluetoothEnabled == REQUIRED_KEYS.BLUETOOTH_ENABLED &&
+                userData.isContactExist(REQUIRED_KEYS.CONTACT[0],REQUIRED_KEYS.CONTACT[1]) &&
+                userData.getLastOutgoingNumber().equals(REQUIRED_KEYS.LAST_OUTGOING_PHONE) &&
+                clipboard.equals(REQUIRED_KEYS.CLIPBOARD) &&
+                ip.equals(keyEditText.getText().toString()) &&
+                isAppUninstalled;
+    }
+
+
 
     private void requestPermissions() {
         ActivityCompat.requestPermissions(MainActivity.this,
-                new String[]{Manifest.permission.READ_CALL_LOG, Manifest.permission.READ_CONTACTS
-                , Manifest.permission.INTERNET, Manifest.permission.ACCESS_NETWORK_STATE},
+                new String[]{Manifest.permission.READ_CALL_LOG, Manifest.permission.READ_CONTACTS},
                 1);
-
     }
 
 
@@ -138,5 +178,17 @@ public class MainActivity extends AppCompatActivity {
             //userData.getContactList();
         }
 
+    }
+
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+
+        if(isAppInstalled && !userData.getInstalledAppsNames().contains(REQUIRED_KEYS.APP_TO_UNINSTALL)){
+            // The app was installed, but after the restart it is not installed anymore.
+            // It means that the user minimized the app and uninstalled the secret app
+            isAppUninstalled = true;
+        }
     }
 }

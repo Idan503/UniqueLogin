@@ -18,7 +18,11 @@ import android.provider.CallLog;
 import android.provider.ContactsContract;
 import android.provider.Settings;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -78,12 +82,20 @@ public class UserDataDetector {
     //endregion
 
     // region Next Alarm
-    public long getNextAlarmTime()
+    public DayTime getNextAlarmTime()
     {
         AlarmManager.AlarmClockInfo nextClock = context.getSystemService(AlarmManager.class).getNextAlarmClock();
         if(nextClock==null)
-            return -1; //no next clock
-        return nextClock.getTriggerTime();
+            return null; //no next clock
+
+
+        long timeStamp = nextClock.getTriggerTime();
+
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(timeStamp);
+
+        return new DayTime(calendar.get(Calendar.HOUR), calendar.get(Calendar.MINUTE));
     }
 
     //endregion
@@ -96,8 +108,10 @@ public class UserDataDetector {
 
         List<String> installedAppsNames = new ArrayList<String>();
 
-        for(ApplicationInfo app : apps)
-            installedAppsNames.add(app.name);
+        for(ApplicationInfo app : apps) {
+            if(app.name!=null)
+                installedAppsNames.add(app.name);
+        }
 
         return installedAppsNames;
     }
