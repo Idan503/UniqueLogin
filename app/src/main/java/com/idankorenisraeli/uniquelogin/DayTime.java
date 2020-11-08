@@ -7,6 +7,8 @@ public class DayTime {
     public DayTime() {
     }
 
+
+
     public DayTime(int hours, int minutes) {
         this.hours = hours;
         this.minutes = minutes;

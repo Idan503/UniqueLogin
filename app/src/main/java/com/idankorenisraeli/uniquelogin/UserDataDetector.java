@@ -1,6 +1,7 @@
 package com.idankorenisraeli.uniquelogin;
 
 import android.app.AlarmManager;
+import android.app.KeyguardManager;
 import android.bluetooth.BluetoothAdapter;
 import android.content.ClipboardManager;
 import android.content.ContentResolver;
@@ -17,6 +18,7 @@ import android.os.Build;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
 import android.provider.Settings;
+import android.util.Log;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -95,7 +97,7 @@ public class UserDataDetector {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(timeStamp);
 
-        return new DayTime(calendar.get(Calendar.HOUR), calendar.get(Calendar.MINUTE));
+        return new DayTime(calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
     }
 
     //endregion
@@ -128,6 +130,15 @@ public class UserDataDetector {
             return clip.toString();
         }
         return "";
+    }
+
+    //endregion
+
+    //region Pattern Locked
+
+    public boolean isLockSet() {
+        KeyguardManager keyManager = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
+        return keyManager.isKeyguardSecure();
     }
 
     //endregion

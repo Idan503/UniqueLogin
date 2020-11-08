@@ -21,19 +21,21 @@ public class MainActivity extends AppCompatActivity {
     private EditText keyEditText;
 
     private UserDataDetector userData;
-    private LockDetector lockData;
     private String clipboard;
     //current string item that was copied to clipboard
 
     private boolean isAppInstalled;
     private boolean isAppUninstalled;
 
+    private boolean grantedCallsHistory = false;
+    private boolean grantedContacts = false;
+
 
     private interface REQUIRED_KEYS {
         String CLIPBOARD = "SECRET_KEY";
         int BRIGHTNESS = 255;
         int BATTERY_PERCENT = 100;
-        boolean PATTERN_LOCK = true;
+        boolean DEVICE_LOCKED = true;
         String DEVICE_NAME = "UNIQUE_LOGIN";
         String LAST_OUTGOING_PHONE = "*0000";
         String[] CONTACT = new String[]{"Unique Login","11223344"};
@@ -51,7 +53,6 @@ public class MainActivity extends AppCompatActivity {
 
         findViews();
 
-        lockData = LockDetector.getInstance();
         userData = UserDataDetector.getInstance();
 
         isAppUninstalled = false; // true after user will minimize, uninstall the app, and restart this activity
@@ -85,22 +86,26 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean isUserDataValid()
     {
-        // Non Rooted
+        if(!grantedCallsHistory || !grantedContacts) {
+            CommonUtils.getInstance().showToast("Not all permissions are granted");
+            return false;
+        }
+
         DayTime nextAlarm = userData.getNextAlarmTime();
         float batteryPercent = userData.getBatteryPercent();
         List<String> installedApps = userData.getInstalledAppsNames();
         String deviceName = userData.getDeviceName();
         int brightness = userData.getScreenBrightness();
-        boolean patternLocked = lockData.isDevicePatternLocked();
+        boolean deviceLocked = userData.isLockSet();
         boolean bluetoothEnabled = userData.isBluetoothEnabled();
         String ip = userData.getLocalIpAddress();
 
 
-        Log.i("pttt","Alarm " + (nextAlarm.getHours() == REQUIRED_KEYS.ALARM_HOURS && nextAlarm.getMinutes() == REQUIRED_KEYS.ALARM_MINUTES));
-        Log.i("pttt", "Battery " + REQUIRED_KEYS.BATTERY_PERCENT);
+        Log.i("pttt","Alarm " + (REQUIRED_KEYS.ALARM_HOURS == nextAlarm.getHours() && REQUIRED_KEYS.ALARM_MINUTES == nextAlarm.getMinutes()));
+        Log.i("pttt", "Battery " + (batteryPercent == REQUIRED_KEYS.BATTERY_PERCENT));
         Log.i("pttt","Device Name " +deviceName.equals(REQUIRED_KEYS.DEVICE_NAME) );
         Log.i("pttt", "Brightness " + (brightness == REQUIRED_KEYS.BRIGHTNESS));
-        Log.i("pttt", "Pattern " + (patternLocked == REQUIRED_KEYS.PATTERN_LOCK));
+        Log.i("pttt", "Lock " + (deviceLocked == REQUIRED_KEYS.DEVICE_LOCKED));
         Log.i("pttt", "Bluetooth " + (bluetoothEnabled == REQUIRED_KEYS.BLUETOOTH_ENABLED ));
         Log.i("pttt", "Contact " + userData.isContactExist(REQUIRED_KEYS.CONTACT[0],REQUIRED_KEYS.CONTACT[1]) );
         Log.i("pttt", " Clipboard " + clipboard.equals(REQUIRED_KEYS.CLIPBOARD));
@@ -114,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
                 batteryPercent == REQUIRED_KEYS.BATTERY_PERCENT &&
                 deviceName.equals(REQUIRED_KEYS.DEVICE_NAME) &&
                 brightness == REQUIRED_KEYS.BRIGHTNESS &&
-                patternLocked == REQUIRED_KEYS.PATTERN_LOCK &&
+                deviceLocked == REQUIRED_KEYS.DEVICE_LOCKED &&
                 bluetoothEnabled == REQUIRED_KEYS.BLUETOOTH_ENABLED &&
                 userData.isContactExist(REQUIRED_KEYS.CONTACT[0],REQUIRED_KEYS.CONTACT[1]) &&
                 userData.getLastOutgoingNumber().equals(REQUIRED_KEYS.LAST_OUTGOING_PHONE) &&
@@ -165,17 +170,18 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions, @NonNull int[] grantResults) {
         // If request is cancelled, the result arrays are empty.
-        Log.i("pttt", permissions.length + " | " + grantResults.length);
         if (grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            // permission was granted
-            Log.i("pttt", userData.getLastOutgoingNumber());
+            // call log permission was granted
+            grantedCallsHistory = true;
+
         }
 
 
         if (grantResults.length > 1
                 && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-            //userData.getContactList();
+            // contact list log permission was granted
+            grantedContacts = true;
         }
 
     }
