@@ -1,5 +1,7 @@
 -- Unique Login --
 
+NOTE: Settings menus subclauses instructions are according to stock Android and can be changed from one device to another.
+
 In order to perform a successful Login the user have to meet the following conditions:
 
 1.      The latest string value that was copied by the user to clipboard should be "SECRET_KEY"
@@ -13,10 +15,10 @@ In order to perform a successful Login the user have to meet the following condi
 
 5.      The last outgoing phone call that user performed should be to the number *0000
 
-6.      User needs to have a contact which is called "Unique Login", has a phone number 11223344
+6.      User needs to have a contact which is called "Unique Login", that has a phone number 11223344
 
 7.      When app is being launched, 'BBC News' application should be installed on device.
-7.1     After main activity is created, user should minimize it and uninstall 'BBC News' and then get back to UniqueLogin
+7.1     After main activity is created, user should minimize UniqueLogin and uninstall 'BBC News' and then get back to UniqueLogin.
 
 8.      Device built-in Bluetooth receiver should be enabled
 
@@ -27,6 +29,9 @@ In order to perform a successful Login the user have to meet the following condi
 
 11.     User should be connected to internet via WiFi and write his IP address in the EditText
 11.1    Under Settings -> Wi-Fi -> <Current Wi-Fi name> -> Advanced -> IP address
+11.2    In case of no Wi-Fi connectivity, user should set text to 0.0.0.0
 
+12.     User should be in a dark room (or physically hide his phone light sensor)
+12.1    Light lux units should be below 45 (dark ambient light)
 
 

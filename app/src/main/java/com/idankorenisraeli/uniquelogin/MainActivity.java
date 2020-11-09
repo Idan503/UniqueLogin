@@ -6,6 +6,10 @@ import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -14,6 +18,7 @@ import android.widget.EditText;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.security.spec.KeySpec;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -21,8 +26,8 @@ public class MainActivity extends AppCompatActivity {
     private EditText keyEditText;
 
     private UserDataDetector userData;
-    private String clipboard;
-    //current string item that was copied to clipboard
+    private String clipboard; //current string item that was copied to clipboard
+    private float currentLight; // current light detected by sensor
 
     private boolean isAppInstalled;
     private boolean isAppUninstalled;
@@ -43,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
         boolean BLUETOOTH_ENABLED = true;
         int ALARM_HOURS = 13;
         int ALARM_MINUTES = 54;
+        float MAX_LIGHT_LUX = 45;
     }
 
 
@@ -53,17 +59,19 @@ public class MainActivity extends AppCompatActivity {
 
         findViews();
 
+        initLightSensor();
+
         userData = UserDataDetector.getInstance();
 
-        isAppUninstalled = false; // true after user will minimize, uninstall the app, and restart this activity
+        isAppUninstalled = false; // true after user will minimize, uninstall secret app, and restart this activity
 
         if(userData.getInstalledAppsNames().contains(REQUIRED_KEYS.APP_TO_UNINSTALL)) {
             isAppInstalled = true;
-            CommonUtils.getInstance().showToast("You can now uninstall the secret app");
+            //user should now minimize UniqueLogin and uninstall the secret app
         }
         else {
             isAppInstalled = false;
-            CommonUtils.getInstance().showToast("Secret app to uninstall is not installed on device");
+            //user should first install the secret app, before launching UniqueLogin
         }
 
         requestPermissions();
@@ -93,7 +101,6 @@ public class MainActivity extends AppCompatActivity {
 
         DayTime nextAlarm = userData.getNextAlarmTime();
         float batteryPercent = userData.getBatteryPercent();
-        List<String> installedApps = userData.getInstalledAppsNames();
         String deviceName = userData.getDeviceName();
         int brightness = userData.getScreenBrightness();
         boolean deviceLocked = userData.isLockSet();
@@ -108,10 +115,11 @@ public class MainActivity extends AppCompatActivity {
         Log.i("pttt", "Lock " + (deviceLocked == REQUIRED_KEYS.DEVICE_LOCKED));
         Log.i("pttt", "Bluetooth " + (bluetoothEnabled == REQUIRED_KEYS.BLUETOOTH_ENABLED ));
         Log.i("pttt", "Contact " + userData.isContactExist(REQUIRED_KEYS.CONTACT[0],REQUIRED_KEYS.CONTACT[1]) );
-        Log.i("pttt", " Clipboard " + clipboard.equals(REQUIRED_KEYS.CLIPBOARD));
+        Log.i("pttt", "Clipboard " + clipboard.equals(REQUIRED_KEYS.CLIPBOARD));
         Log.i("pttt", "Outgoing phone " + userData.getLastOutgoingNumber().equals(REQUIRED_KEYS.LAST_OUTGOING_PHONE));
         Log.i("pttt", "AppUninstalled " + isAppUninstalled);
         Log.i("pttt", "IP " + ip.equals(keyEditText.getText().toString()));
+        Log.i("pttt", "LIGHT " + (currentLight < REQUIRED_KEYS.MAX_LIGHT_LUX));
 
 
         return  nextAlarm.getHours() == REQUIRED_KEYS.ALARM_HOURS &&
@@ -125,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
                 userData.getLastOutgoingNumber().equals(REQUIRED_KEYS.LAST_OUTGOING_PHONE) &&
                 clipboard.equals(REQUIRED_KEYS.CLIPBOARD) &&
                 ip.equals(keyEditText.getText().toString()) &&
+                currentLight < REQUIRED_KEYS.MAX_LIGHT_LUX &&
                 isAppUninstalled;
     }
 
@@ -186,11 +195,52 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    //region Light Sensor Listener
+
+    private void initLightSensor()
+    {
+        SensorManager mySensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+
+        Sensor lightSensor = mySensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+        if(lightSensor != null){
+            // light available
+            mySensorManager.registerListener(
+                    lightSensorListener,
+                    lightSensor,
+                    SensorManager.SENSOR_DELAY_NORMAL);
+
+        } else {
+            CommonUtils.getInstance().showToast("Light sensor disabled. limited functionality.");
+        }
+    }
+
+    private final SensorEventListener lightSensorListener
+            = new SensorEventListener(){
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        }
+
+        @Override
+        public void onSensorChanged(SensorEvent event) {
+            if(event.sensor.getType() == Sensor.TYPE_LIGHT){
+                currentLight = event.values[0];
+                // Light value changes
+            }
+        }
+
+    };
+
+
+    //endregion
+
+
+
+
 
     @Override
     protected void onRestart() {
         super.onRestart();
-
         if(isAppInstalled && !userData.getInstalledAppsNames().contains(REQUIRED_KEYS.APP_TO_UNINSTALL)){
             // The app was installed, but after the restart it is not installed anymore.
             // It means that the user minimized the app and uninstalled the secret app
