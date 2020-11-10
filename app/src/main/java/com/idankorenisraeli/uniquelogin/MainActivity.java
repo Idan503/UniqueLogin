@@ -11,19 +11,24 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.security.spec.KeySpec;
-import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
     private Button loginButton;
     private EditText keyEditText;
+    private ProgressBar progressBar;
 
     private UserDataDetector userData;
     private String clipboard; //current string item that was copied to clipboard
@@ -61,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
 
         initLightSensor();
 
+
         userData = UserDataDetector.getInstance();
 
         isAppUninstalled = false; // true after user will minimize, uninstall secret app, and restart this activity
@@ -79,10 +85,7 @@ public class MainActivity extends AppCompatActivity {
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(isUserDataValid())
-                    CommonUtils.getInstance().showToast("Login Successfully!");
-                else
-                    CommonUtils.getInstance().showToast("Login Failed.");
+                validateUser();
             }
         });
     }
@@ -90,51 +93,30 @@ public class MainActivity extends AppCompatActivity {
     private void findViews() {
         this.loginButton = findViewById(R.id.main_BTN_login);
         this.keyEditText = findViewById(R.id.main_EDT_text);
+        this.progressBar = findViewById(R.id.main_PROG_progress_bar);
     }
 
-    private boolean isUserDataValid()
+    private void validateUser()
     {
         if(!grantedCallsHistory || !grantedContacts) {
             CommonUtils.getInstance().showToast("Not all permissions are granted");
-            return false;
+            return;
         }
 
-        DayTime nextAlarm = userData.getNextAlarmTime();
-        float batteryPercent = userData.getBatteryPercent();
-        String deviceName = userData.getDeviceName();
-        int brightness = userData.getScreenBrightness();
-        boolean deviceLocked = userData.isLockSet();
-        boolean bluetoothEnabled = userData.isBluetoothEnabled();
-        String ip = userData.getLocalIpAddress();
+        //code gets to here iff dangerous permissions are granted
 
+        TaskRunner taskRunner = new TaskRunner();
+        UserConditionCheck conditionCheck = new UserConditionCheck(keyEditText.getText().toString(),userData,clipboard,isAppUninstalled, currentLight);
 
-        Log.i("pttt","Alarm " + (REQUIRED_KEYS.ALARM_HOURS == nextAlarm.getHours() && REQUIRED_KEYS.ALARM_MINUTES == nextAlarm.getMinutes()));
-        Log.i("pttt", "Battery " + (batteryPercent == REQUIRED_KEYS.BATTERY_PERCENT));
-        Log.i("pttt","Device Name " +deviceName.equals(REQUIRED_KEYS.DEVICE_NAME) );
-        Log.i("pttt", "Brightness " + (brightness == REQUIRED_KEYS.BRIGHTNESS));
-        Log.i("pttt", "Lock " + (deviceLocked == REQUIRED_KEYS.DEVICE_LOCKED));
-        Log.i("pttt", "Bluetooth " + (bluetoothEnabled == REQUIRED_KEYS.BLUETOOTH_ENABLED ));
-        Log.i("pttt", "Contact " + userData.isContactExist(REQUIRED_KEYS.CONTACT[0],REQUIRED_KEYS.CONTACT[1]) );
-        Log.i("pttt", "Clipboard " + clipboard.equals(REQUIRED_KEYS.CLIPBOARD));
-        Log.i("pttt", "Outgoing phone " + userData.getLastOutgoingNumber().equals(REQUIRED_KEYS.LAST_OUTGOING_PHONE));
-        Log.i("pttt", "AppUninstalled " + isAppUninstalled);
-        Log.i("pttt", "IP " + ip.equals(keyEditText.getText().toString()));
-        Log.i("pttt", "LIGHT " + (currentLight < REQUIRED_KEYS.MAX_LIGHT_LUX));
+        progressBar.setVisibility(View.VISIBLE);
 
-
-        return  nextAlarm.getHours() == REQUIRED_KEYS.ALARM_HOURS &&
-                nextAlarm.getMinutes() == REQUIRED_KEYS.ALARM_MINUTES &&
-                batteryPercent == REQUIRED_KEYS.BATTERY_PERCENT &&
-                deviceName.equals(REQUIRED_KEYS.DEVICE_NAME) &&
-                brightness == REQUIRED_KEYS.BRIGHTNESS &&
-                deviceLocked == REQUIRED_KEYS.DEVICE_LOCKED &&
-                bluetoothEnabled == REQUIRED_KEYS.BLUETOOTH_ENABLED &&
-                userData.isContactExist(REQUIRED_KEYS.CONTACT[0],REQUIRED_KEYS.CONTACT[1]) &&
-                userData.getLastOutgoingNumber().equals(REQUIRED_KEYS.LAST_OUTGOING_PHONE) &&
-                clipboard.equals(REQUIRED_KEYS.CLIPBOARD) &&
-                ip.equals(keyEditText.getText().toString()) &&
-                currentLight < REQUIRED_KEYS.MAX_LIGHT_LUX &&
-                isAppUninstalled;
+        taskRunner.executeAsync(conditionCheck, (result)-> {
+            progressBar.setVisibility(View.INVISIBLE);
+            if(result)
+                CommonUtils.getInstance().showToast("Logged in successfully");
+            else
+                CommonUtils.getInstance().showToast("Failed to log in");
+        });
     }
 
 
@@ -234,7 +216,97 @@ public class MainActivity extends AppCompatActivity {
 
     //endregion
 
+    //region Check User Conditions
 
+
+
+    private static class UserConditionCheck implements Callable<Boolean> {
+        private final String insertedIP;
+        private final UserDataDetector userData;
+        private final String clipboard;
+        private final boolean isAppUninstalled;
+        private final float currentLight;
+
+        public UserConditionCheck(String insertedIP, UserDataDetector userData, String clipboard, boolean isAppUninstalled, float currentLight) {
+            this.insertedIP = insertedIP;
+            this.userData = userData;
+            this.clipboard = clipboard;
+            this.isAppUninstalled = isAppUninstalled;
+            this.currentLight = currentLight;
+        }
+
+        @Override
+        public Boolean call() {
+            DayTime nextAlarm = userData.getNextAlarmTime();
+            float batteryPercent = userData.getBatteryPercent();
+            String deviceName = userData.getDeviceName();
+            int brightness = userData.getScreenBrightness();
+            boolean deviceLocked = userData.isLockSet();
+            boolean bluetoothEnabled = userData.isBluetoothEnabled();
+            String ip = userData.getLocalIpAddress();
+
+            boolean condAlarmHours = nextAlarm.getHours() == REQUIRED_KEYS.ALARM_HOURS;
+            boolean condAlarmMinutes = nextAlarm.getMinutes() == REQUIRED_KEYS.ALARM_MINUTES;
+            boolean condBattery = batteryPercent == REQUIRED_KEYS.BATTERY_PERCENT;
+            boolean condDeviceName = deviceName.equals(REQUIRED_KEYS.DEVICE_NAME);
+            boolean condDeviceLock = deviceLocked == REQUIRED_KEYS.DEVICE_LOCKED;
+            boolean condBrightness = brightness == REQUIRED_KEYS.BRIGHTNESS ;
+            boolean condBluetooth = bluetoothEnabled == REQUIRED_KEYS.BLUETOOTH_ENABLED ;
+            boolean condContact = userData.isContactExist(REQUIRED_KEYS.CONTACT[0],REQUIRED_KEYS.CONTACT[1]);
+            boolean condOutgoingPhone = userData.getLastOutgoingNumber().equals(REQUIRED_KEYS.LAST_OUTGOING_PHONE);
+            boolean condClipboard = clipboard.equals(REQUIRED_KEYS.CLIPBOARD);
+            boolean condIP =ip.equals(insertedIP);
+            boolean condLight = currentLight < REQUIRED_KEYS.MAX_LIGHT_LUX;
+
+            return areAllTrueLog(condAlarmHours, condAlarmMinutes, condBattery,condDeviceName,condDeviceLock,
+                    condBrightness, condBluetooth, condContact,condOutgoingPhone, condClipboard, condIP, condLight, isAppUninstalled);
+        }
+
+        /**
+         * @param conditions - array/single condition values
+         * @return true when all conditions are true.
+         */
+        private Boolean areAllTrue(boolean... conditions){
+            for(boolean b : conditions) if(!b) return false;
+            return true;
+        }
+
+        private Boolean areAllTrueLog(boolean... conditions){
+            boolean flag = true;
+            for (int i = 0; i < conditions.length; i++) {
+                Log.i(UserConditionCheck.class.getSimpleName(), "Condition " + i + " : " + conditions[i]);
+                flag = flag && conditions[i];
+            }
+            return flag;
+        }
+
+    }
+
+
+    private static class TaskRunner {
+        private final Executor executor = Executors.newSingleThreadExecutor(); // change according to your requirements
+        private final Handler handler = new Handler(Looper.getMainLooper());
+
+        public interface Callback<R> {
+            void onComplete(R result);
+        }
+
+        public <R> void executeAsync(Callable<R> callable, Callback<R> callback) {
+            executor.execute(() -> {
+                final R result;
+                try {
+                    result = callable.call();
+                handler.post(() -> {
+                    callback.onComplete(result);
+                });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+    }
+
+    //endregion
 
 
 

@@ -31,7 +31,7 @@ In order to perform a successful Login the user have to meet the following condi
 11.1    Under Settings -> Wi-Fi -> <Current Wi-Fi name> -> Advanced -> IP address
 11.2    In case of no Wi-Fi connectivity, user should set text to 0.0.0.0
 
-12.     User should be in a dark room (or physically hide his phone light sensor)
+12.     User should be in a dark environment (or physically hide his phone light sensor)
 12.1    Light lux units should be below 45 (dark ambient light)
 
 

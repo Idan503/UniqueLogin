@@ -30,4 +30,12 @@
         android:id="@+id/main_TXT_camera_preview"
         />
 
+    <ProgressBar
+        android:id="@+id/main_PROG_progress_bar"
+        android:layout_marginTop="50dp"
+        android:visibility="invisible"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
 </LinearLayout>
