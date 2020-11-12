@@ -1,17 +1,12 @@
-package com.idankorenisraeli.uniquelogin;
+package com.idankorenisraeli.uniquelogin.sms;
 
 import android.app.Activity;
-import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.telephony.SmsMessage;
 import android.util.Log;
-
-import androidx.appcompat.app.AppCompatActivity;
 
 public class SmsListener extends BroadcastReceiver {
     private static OnSmsReceived callback;
