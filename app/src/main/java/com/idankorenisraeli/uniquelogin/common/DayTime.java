@@ -1,12 +1,14 @@
-package com.idankorenisraeli.uniquelogin;
+package com.idankorenisraeli.uniquelogin.common;
 
+/**
+ * A simple time of day class, in 00:00 to 23:59 format (non am/pm)
+ */
 public class DayTime {
     private int hours;
     private int minutes;
 
     public DayTime() {
     }
-
 
 
     public DayTime(int hours, int minutes) {

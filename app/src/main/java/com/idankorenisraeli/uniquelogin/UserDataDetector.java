@@ -18,13 +18,11 @@ import android.os.Build;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
 import android.provider.Settings;
-import android.util.Log;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import com.idankorenisraeli.uniquelogin.common.DayTime;
+
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 

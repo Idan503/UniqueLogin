@@ -17,6 +17,7 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 
 import com.idankorenisraeli.uniquelogin.common.CommonUtils;
+import com.idankorenisraeli.uniquelogin.common.TaskRunner;
 import com.idankorenisraeli.uniquelogin.sms.OnSmsReceived;
 import com.idankorenisraeli.uniquelogin.sms.SmsListener;
 

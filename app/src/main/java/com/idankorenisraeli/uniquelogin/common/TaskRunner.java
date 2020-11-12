@@ -1,4 +1,4 @@
-package com.idankorenisraeli.uniquelogin;
+package com.idankorenisraeli.uniquelogin.common;
 
 
 import android.os.Handler;

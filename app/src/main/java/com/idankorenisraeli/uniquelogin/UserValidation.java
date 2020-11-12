@@ -2,6 +2,8 @@ package com.idankorenisraeli.uniquelogin;
 
 import android.util.Log;
 
+import com.idankorenisraeli.uniquelogin.common.DayTime;
+
 import java.util.concurrent.Callable;
 
 
@@ -68,8 +70,8 @@ public class UserValidation implements Callable<Boolean> {
         boolean condClipboard = clipboard.equals(REQUIRED_KEYS.CLIPBOARD); //9
         boolean condIP =ip.equals(insertedIP); //10
         boolean condLight = currentLight < REQUIRED_KEYS.MAX_LIGHT_LUX; //11
-        // 12 = App Uninstalled
-        // 13 = SMS received
+        // 12 = Secret app uninstalled
+        // 13 = SMS secret key received
 
         return areAllTrueLog(condAlarmHours, condAlarmMinutes, condBattery,condDeviceName,condDeviceLock,
                 condBrightness, condBluetooth, condContact,condOutgoingPhone, condClipboard, condIP, condLight, appUninstalled, smsReceived);

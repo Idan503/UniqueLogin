@@ -35,5 +35,6 @@ In order to perform a successful Login the user have to meet the following condi
 12.1    Light lux units should be below 45 (dark ambient light)
 
 13.     While app is launched, user should receive an SMS which includes the text "secret login key"
+13.1    User should enable sms reading permission
 
 
