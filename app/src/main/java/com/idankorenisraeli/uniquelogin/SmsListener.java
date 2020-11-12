@@ -1,5 +1,7 @@
 package com.idankorenisraeli.uniquelogin;
 
+import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -9,11 +11,19 @@ import android.os.Bundle;
 import android.telephony.SmsMessage;
 import android.util.Log;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 public class SmsListener extends BroadcastReceiver {
+    private static OnSmsReceived callback;
+
+
+    public static void setCallback(OnSmsReceived onReceived){
+        callback = onReceived;
+    }
 
     @Override
     public void onReceive(Context context, Intent intent) {
-
+        Log.i("pttt", "IS IT? " + (context instanceof Activity));
         if (intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")) {
             Bundle bundle = intent.getExtras();
             if (bundle != null) {
@@ -25,10 +35,8 @@ public class SmsListener extends BroadcastReceiver {
                         SmsMessage currentSMS = getIncomingMessage(aObject, bundle);
 
                         String senderNo = currentSMS.getDisplayOriginatingAddress();
-
                         String message = currentSMS.getDisplayMessageBody();
-
-                        Log.i("pttt", message);
+                        callback.onSmsReceived(senderNo, message);
                     }
                     this.abortBroadcast();
                     // End of loop

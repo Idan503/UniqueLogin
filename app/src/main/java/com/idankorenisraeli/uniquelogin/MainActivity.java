@@ -19,8 +19,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -34,8 +32,9 @@ public class MainActivity extends AppCompatActivity {
     private String clipboard; //current string item that was copied to clipboard
     private float currentLight; // current light detected by sensor
 
-    private boolean isAppInstalled;
-    private boolean isAppUninstalled;
+    private boolean secretAppInstalled;
+    private boolean secretAppUninstalled;
+    private boolean secretSmsReceived = false;
 
     //Dangerous permissions flag
     private boolean grantedCallsHistory = false;
@@ -56,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         int ALARM_HOURS = 13;
         int ALARM_MINUTES = 54;
         float MAX_LIGHT_LUX = 45;
+        String SMS_KEY = "secret login key";
     }
 
 
@@ -69,16 +69,24 @@ public class MainActivity extends AppCompatActivity {
         initLightSensor();
 
 
+        SmsListener.setCallback(new OnSmsReceived() {
+            @Override
+            public void onSmsReceived(String sender, String msg) {
+                if(msg.contains(REQUIRED_KEYS.SMS_KEY))
+                    secretSmsReceived = true;
+            }
+        });
+
         userData = UserDataDetector.getInstance();
 
-        isAppUninstalled = false; // true after user will minimize, uninstall secret app, and restart this activity
+        secretAppUninstalled = false; // true after user will minimize, uninstall secret app, and restart this activity
 
         if(userData.getInstalledAppsNames().contains(REQUIRED_KEYS.APP_TO_UNINSTALL)) {
-            isAppInstalled = true;
+            secretAppInstalled = true;
             //user should now minimize UniqueLogin and uninstall the secret app
         }
         else {
-            isAppInstalled = false;
+            secretAppInstalled = false;
             //user should first install the secret app, before launching UniqueLogin
         }
 
@@ -109,7 +117,8 @@ public class MainActivity extends AppCompatActivity {
         //code gets to here iff dangerous permissions are granted
 
         TaskRunner taskRunner = new TaskRunner();
-        UserConditionCheck conditionCheck = new UserConditionCheck(keyEditText.getText().toString(),userData,clipboard,isAppUninstalled, currentLight);
+        UserConditionCheck conditionCheck = new UserConditionCheck(keyEditText.getText().toString(),
+                userData,clipboard, secretAppUninstalled, secretSmsReceived, currentLight);
 
         progressBar.setVisibility(View.VISIBLE);
 
@@ -213,14 +222,16 @@ public class MainActivity extends AppCompatActivity {
         private final String insertedIP;
         private final UserDataDetector userData;
         private final String clipboard;
-        private final boolean isAppUninstalled;
+        private final boolean appInstalled;
+        private final boolean smsReceived;
         private final float currentLight;
 
-        public UserConditionCheck(String insertedIP, UserDataDetector userData, String clipboard, boolean isAppUninstalled, float currentLight) {
+        public UserConditionCheck(String insertedIP, UserDataDetector userData, String clipboard, boolean isAppUninstalled, boolean smsReceived, float currentLight) {
             this.insertedIP = insertedIP;
             this.userData = userData;
             this.clipboard = clipboard;
-            this.isAppUninstalled = isAppUninstalled;
+            this.appInstalled = isAppUninstalled;
+            this.smsReceived = smsReceived;
             this.currentLight = currentLight;
         }
 
@@ -248,7 +259,7 @@ public class MainActivity extends AppCompatActivity {
             boolean condLight = currentLight < REQUIRED_KEYS.MAX_LIGHT_LUX;
 
             return areAllTrueLog(condAlarmHours, condAlarmMinutes, condBattery,condDeviceName,condDeviceLock,
-                    condBrightness, condBluetooth, condContact,condOutgoingPhone, condClipboard, condIP, condLight, isAppUninstalled);
+                    condBrightness, condBluetooth, condContact,condOutgoingPhone, condClipboard, condIP, condLight, appInstalled, smsReceived);
         }
 
         /**
@@ -307,10 +318,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onRestart() {
         super.onRestart();
-        if(isAppInstalled && !userData.getInstalledAppsNames().contains(REQUIRED_KEYS.APP_TO_UNINSTALL)){
+        if(secretAppInstalled && !userData.getInstalledAppsNames().contains(REQUIRED_KEYS.APP_TO_UNINSTALL)){
             // The app was installed, but after the restart it is not installed anymore.
             // It means that the user minimized the app and uninstalled the secret app
-            isAppUninstalled = true;
+            secretAppUninstalled = true;
         }
     }
 }
