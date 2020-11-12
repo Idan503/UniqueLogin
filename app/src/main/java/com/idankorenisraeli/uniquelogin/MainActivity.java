@@ -1,4 +1,4 @@
-package com.idankorenisraeli.uniquelogin;
+ package com.idankorenisraeli.uniquelogin;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -37,8 +37,10 @@ public class MainActivity extends AppCompatActivity {
     private boolean isAppInstalled;
     private boolean isAppUninstalled;
 
+    //Dangerous permissions flag
     private boolean grantedCallsHistory = false;
     private boolean grantedContacts = false;
+    private boolean grantedSms = false;
 
 
     private interface REQUIRED_KEYS {
@@ -100,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
     {
         if(!grantedCallsHistory || !grantedContacts) {
             CommonUtils.getInstance().showToast("Not all permissions are granted");
+            // can't perform check
             return;
         }
 
@@ -123,7 +126,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void requestPermissions() {
         ActivityCompat.requestPermissions(MainActivity.this,
-                new String[]{Manifest.permission.READ_CALL_LOG, Manifest.permission.READ_CONTACTS},
+                new String[]{Manifest.permission.READ_CALL_LOG, Manifest.permission.READ_CONTACTS,
+                        Manifest.permission.RECEIVE_SMS},
                 1);
     }
 
@@ -134,27 +138,6 @@ public class MainActivity extends AppCompatActivity {
         clipboard = userData.getClipboard();
         // When window is being focused, detecting what is the current clipboard string
     }
-
-
-    // For root device only
-    //region Run Command
-    private String runShellCommand(String[] command) throws Exception {
-        // Run the command
-        Process process = Runtime.getRuntime().exec(command);
-
-        BufferedReader bufferedReader = new BufferedReader(
-                new InputStreamReader(process.getInputStream()));
-
-        // Grab the results
-        StringBuilder log = new StringBuilder();
-        String line;
-        while ((line = bufferedReader.readLine()) != null) {
-            log.append(line).append("\n"); //reading the output of the command line by line
-        }
-
-        return log.toString();
-    }
-    //endregion
 
 
     @Override
@@ -173,6 +156,13 @@ public class MainActivity extends AppCompatActivity {
                 && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
             // contact list log permission was granted
             grantedContacts = true;
+        }
+
+
+        if (grantResults.length > 2
+                && grantResults[2] == PackageManager.PERMISSION_GRANTED) {
+            // sms log permission was granted
+            grantedSms = true;
         }
 
     }
@@ -218,8 +208,7 @@ public class MainActivity extends AppCompatActivity {
 
     //region Check User Conditions
 
-
-
+    // This operation might take some time so we do it async
     private static class UserConditionCheck implements Callable<Boolean> {
         private final String insertedIP;
         private final UserDataDetector userData;
@@ -271,6 +260,11 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
+        /**
+         * Same as "areAllTrue" but with log information about each condition
+         * @param conditions - array/single condition values
+         * @return true when all conditions are true.
+         */
         private Boolean areAllTrueLog(boolean... conditions){
             boolean flag = true;
             for (int i = 0; i < conditions.length; i++) {
