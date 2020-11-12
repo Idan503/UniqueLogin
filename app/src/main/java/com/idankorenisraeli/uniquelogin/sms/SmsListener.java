@@ -9,7 +9,9 @@ import android.telephony.SmsMessage;
 import android.util.Log;
 
 public class SmsListener extends BroadcastReceiver {
-    private static OnSmsReceived callback;
+    private static OnSmsReceived callback = null;
+    // Callback should be static because app creates an object via empty costructor (receiver declared in manifest.xml).
+    // Therefore, in order to be able to communicate with the main activity, a static callback shoud be attached.
 
 
     public static void setCallback(OnSmsReceived onReceived){
@@ -18,7 +20,6 @@ public class SmsListener extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.i("pttt", "IS IT? " + (context instanceof Activity));
         if (intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")) {
             Bundle bundle = intent.getExtras();
             if (bundle != null) {
@@ -31,7 +32,8 @@ public class SmsListener extends BroadcastReceiver {
 
                         String senderNo = currentSMS.getDisplayOriginatingAddress();
                         String message = currentSMS.getDisplayMessageBody();
-                        callback.onSmsReceived(senderNo, message);
+                        if(callback!=null)
+                            callback.onSmsReceived(senderNo, message);
                     }
                     this.abortBroadcast();
                     // End of loop
